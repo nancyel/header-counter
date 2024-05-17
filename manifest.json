@@ -1,7 +1,7 @@
 {
 	"id": "header-counter",
 	"name": "Header Counter",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "Counts the number of headers in the current note",
 	"author": "Nancy Lee",
