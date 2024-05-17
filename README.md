@@ -1,6 +1,6 @@
 # Header Counter Plugin
 
-This plugin counts the number of headers in a note and displays the count in the status bar.
+This plugin counts the number of headers in the current note and displays the count in a notification message.
 
 ### Installation
 
