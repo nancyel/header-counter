@@ -6,14 +6,18 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	addIcon,
 } from "obsidian";
+import { ICON_DATA } from "resources/icons";
 
 interface HeaderCounterPluginSettings {
 	defaultLevel: string;
+	showRibbonIcon: boolean;
 }
 
 const DEFAULT_SETTINGS: HeaderCounterPluginSettings = {
 	defaultLevel: "4",
+	showRibbonIcon: true,
 };
 
 export default class HeaderCounterPlugin extends Plugin {
@@ -24,33 +28,25 @@ export default class HeaderCounterPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		this.addRibbonIcon("dice", "Header Counter", () => {
-			new HeaderLevelModal(
-				this.app,
-				(headerLevel) => {
-					this.countHeaders(headerLevel);
-				},
-				parseInt(this.settings.defaultLevel)
-			).open();
-		});
+		addIcon("header", ICON_DATA);
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
+		if (this.settings.showRibbonIcon) {
+			this.addRibbonIcon("header", "Header Counter", () => {
+				new HeaderLevelModal(
+					this.app,
+					(headerLevel) => {
+						this.countHeaders(headerLevel);
+					},
+					parseInt(this.settings.defaultLevel)
+				).open();
+			}).setAttribute("id", "header-counter-icon");
+		}
+
 		this.addSettingTab(new HeaderCounterSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			console.log("click", evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-		);
 
 		this.addCommand({
 			id: "count-headers",
-			name: "Count Headers",
+			name: "Count headers",
 			checkCallback: (checking: boolean) => {
 				if (checking) {
 					return true;
@@ -69,7 +65,7 @@ export default class HeaderCounterPlugin extends Plugin {
 
 		this.addCommand({
 			id: "header-summary",
-			name: "Compute Header Summary",
+			name: "Compute header summary",
 			checkCallback: (checking: boolean) => {
 				if (checking) {
 					return true;
@@ -97,13 +93,8 @@ export default class HeaderCounterPlugin extends Plugin {
 	}
 
 	async countHeaders(headerLevel: number) {
-		const activeLeaf = this.app.workspace.getLeaf();
-		if (!activeLeaf) {
-			new Notice("No active leaf found.");
-			return;
-		}
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 
-		const view = activeLeaf.view;
 		if (!(view instanceof MarkdownView)) {
 			new Notice("Active view is not a Markdown view.");
 			return;
@@ -120,13 +111,8 @@ export default class HeaderCounterPlugin extends Plugin {
 	}
 
 	async computeHeaderSummary() {
-		const activeLeaf = this.app.workspace.getLeaf();
-		if (!activeLeaf) {
-			new Notice("No active leaf found.");
-			return;
-		}
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 
-		const view = activeLeaf.view;
 		if (!(view instanceof MarkdownView)) {
 			new Notice("Active view is not a Markdown view.");
 			return;
@@ -165,7 +151,7 @@ class HeaderLevelModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
-		contentEl.createEl("h2", { text: "Enter Header Level (1-6)" });
+		contentEl.createEl("h2", { text: "Enter header level (1-6)" });
 
 		const input = contentEl.createEl("input", {
 			type: "number",
@@ -220,11 +206,22 @@ class HeaderCounterSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "General Settings" });
+		this.add_general_setting_header();
+		this.add_setting_header();
+		this.add_ribon_icon_setting();
+	}
 
-		new Setting(containerEl)
-			.setName("Default Header Level")
-			.setDesc("Set the default header level to count.")
+	add_general_setting_header(): void {
+		this.containerEl.createEl("h2", { text: "Settings" });
+	}
+
+	add_setting_header(): void {
+		const desc = document.createDocumentFragment();
+		desc.append("Set the default header level to count.");
+
+		new Setting(this.containerEl)
+			.setName("Default header level")
+			.setDesc(desc)
 			.addText((text) =>
 				text
 					.setPlaceholder("Enter a number between 1 and 6")
@@ -239,6 +236,52 @@ class HeaderCounterSettingTab extends PluginSettingTab {
 							new Notice(
 								"Please enter a valid number between 1 and 6."
 							);
+						}
+					})
+			);
+	}
+
+	add_ribon_icon_setting(): void {
+		const desc = document.createDocumentFragment();
+		desc.append(
+			"If enabled, a button which opens the header counter modal will be added to the Obsidian sidebar."
+		);
+
+		new Setting(this.containerEl)
+			.setName("Show icon in sidebar")
+			.setDesc(desc)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showRibbonIcon)
+					.onChange((value) => {
+						this.plugin.settings.showRibbonIcon = value;
+						this.plugin.saveSettings();
+						this.display();
+						if (this.plugin.settings.showRibbonIcon) {
+							this.plugin
+								.addRibbonIcon(
+									"header",
+									"Header Counter",
+									() => {
+										new HeaderLevelModal(
+											this.app,
+											(headerLevel) => {
+												this.plugin.countHeaders(
+													headerLevel
+												);
+											},
+											parseInt(
+												this.plugin.settings
+													.defaultLevel
+											)
+										).open();
+									}
+								)
+								.setAttribute("id", "header-counter-icon");
+						} else {
+							document
+								.getElementById("header-counter-icon")
+								?.remove();
 						}
 					})
 			);
