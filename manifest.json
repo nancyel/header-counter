@@ -3,7 +3,7 @@
 	"name": "Header Counter",
 	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Counts the number of headers in the current note",
+	"description": "Count the number of headers in the current note",
 	"author": "Nancy Lee",
 	"authorUrl": "https://github.com/nancyel",
 	"isDesktopOnly": false

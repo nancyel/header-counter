@@ -12,12 +12,10 @@ import { ICON_DATA } from "resources/icons";
 
 interface HeaderCounterPluginSettings {
 	defaultLevel: string;
-	showRibbonIcon: boolean;
 }
 
 const DEFAULT_SETTINGS: HeaderCounterPluginSettings = {
 	defaultLevel: "4",
-	showRibbonIcon: true,
 };
 
 export default class HeaderCounterPlugin extends Plugin {
@@ -30,17 +28,15 @@ export default class HeaderCounterPlugin extends Plugin {
 
 		addIcon("header", ICON_DATA);
 
-		if (this.settings.showRibbonIcon) {
-			this.addRibbonIcon("header", "Header Counter", () => {
-				new HeaderLevelModal(
-					this.app,
-					(headerLevel) => {
-						this.countHeaders(headerLevel);
-					},
-					parseInt(this.settings.defaultLevel)
-				).open();
-			}).setAttribute("id", "header-counter-icon");
-		}
+		this.addRibbonIcon("header", "Header Counter", () => {
+			new HeaderLevelModal(
+				this.app,
+				(headerLevel) => {
+					this.countHeaders(headerLevel);
+				},
+				parseInt(this.settings.defaultLevel)
+			).open();
+		});
 
 		this.addSettingTab(new HeaderCounterSettingTab(this.app, this));
 
@@ -48,8 +44,10 @@ export default class HeaderCounterPlugin extends Plugin {
 			id: "count-headers",
 			name: "Count headers",
 			checkCallback: (checking: boolean) => {
+				const view =
+					this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (checking) {
-					return true;
+					return !!view;
 				}
 
 				// Prompt user for header level input
@@ -67,10 +65,11 @@ export default class HeaderCounterPlugin extends Plugin {
 			id: "header-summary",
 			name: "Compute header summary",
 			checkCallback: (checking: boolean) => {
+				const view =
+					this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (checking) {
-					return true;
+					return !!view;
 				}
-
 				this.computeHeaderSummary();
 			},
 		});
@@ -93,12 +92,9 @@ export default class HeaderCounterPlugin extends Plugin {
 	}
 
 	async countHeaders(headerLevel: number) {
-		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-
-		if (!(view instanceof MarkdownView)) {
-			new Notice("Active view is not a Markdown view.");
-			return;
-		}
+		const view = this.app.workspace.getActiveViewOfType(
+			MarkdownView
+		) as MarkdownView;
 
 		const editor = view.editor;
 		const content = editor.getValue();
@@ -111,12 +107,9 @@ export default class HeaderCounterPlugin extends Plugin {
 	}
 
 	async computeHeaderSummary() {
-		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-
-		if (!(view instanceof MarkdownView)) {
-			new Notice("Active view is not a Markdown view.");
-			return;
-		}
+		const view = this.app.workspace.getActiveViewOfType(
+			MarkdownView
+		) as MarkdownView;
 
 		const editor = view.editor;
 		const content = editor.getValue();
@@ -129,7 +122,7 @@ export default class HeaderCounterPlugin extends Plugin {
 			headerSummary[`h${level}`] = matches ? matches.length : 0;
 		}
 
-		new Notice(`Header Summary: ${JSON.stringify(headerSummary)}`);
+		new Notice(`Header summary: ${JSON.stringify(headerSummary)}`);
 		new Notice("Copied to clipboard!");
 		navigator.clipboard.writeText(JSON.stringify(headerSummary));
 	}
@@ -208,11 +201,10 @@ class HeaderCounterSettingTab extends PluginSettingTab {
 
 		this.add_general_setting_header();
 		this.add_setting_header();
-		this.add_ribon_icon_setting();
 	}
 
 	add_general_setting_header(): void {
-		this.containerEl.createEl("h2", { text: "Settings" });
+		new Setting(this.containerEl).setName("Header counter").setHeading();
 	}
 
 	add_setting_header(): void {
@@ -236,52 +228,6 @@ class HeaderCounterSettingTab extends PluginSettingTab {
 							new Notice(
 								"Please enter a valid number between 1 and 6."
 							);
-						}
-					})
-			);
-	}
-
-	add_ribon_icon_setting(): void {
-		const desc = document.createDocumentFragment();
-		desc.append(
-			"If enabled, a button which opens the header counter modal will be added to the Obsidian sidebar."
-		);
-
-		new Setting(this.containerEl)
-			.setName("Show icon in sidebar")
-			.setDesc(desc)
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.showRibbonIcon)
-					.onChange((value) => {
-						this.plugin.settings.showRibbonIcon = value;
-						this.plugin.saveSettings();
-						this.display();
-						if (this.plugin.settings.showRibbonIcon) {
-							this.plugin
-								.addRibbonIcon(
-									"header",
-									"Header Counter",
-									() => {
-										new HeaderLevelModal(
-											this.app,
-											(headerLevel) => {
-												this.plugin.countHeaders(
-													headerLevel
-												);
-											},
-											parseInt(
-												this.plugin.settings
-													.defaultLevel
-											)
-										).open();
-									}
-								)
-								.setAttribute("id", "header-counter-icon");
-						} else {
-							document
-								.getElementById("header-counter-icon")
-								?.remove();
 						}
 					})
 			);

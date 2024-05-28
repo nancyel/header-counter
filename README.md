@@ -8,9 +8,9 @@ If this plugin isn't listed in the Obsidian plugin registry yet, you'll need to 
 
 ### Available Commands
 
--   **Count Headers**: Open the command palette and search for "Header Counter: Count Headers" to count the headers in the current note.
+-   **Count headers**: Open the command palette and search for "Header Counter: Count Headers" to count the headers in the current note.
 
--   **Compute Header Summary**: Open the command palette and search for "Header Counter: Compute Header Summary" to compute the header summary for the current note.
+-   **Compute header summary**: Open the command palette and search for "Header Counter: Compute Header Summary" to compute the header summary for the current note.
 
 ### Configuration
 
