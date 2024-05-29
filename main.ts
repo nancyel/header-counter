@@ -29,10 +29,13 @@ export default class HeaderCounterPlugin extends Plugin {
 		addIcon("header", ICON_DATA);
 
 		this.addRibbonIcon("header", "Header Counter", () => {
+			const view = this.app.workspace.getActiveViewOfType(
+				MarkdownView
+			) as MarkdownView;
 			new HeaderLevelModal(
 				this.app,
 				(headerLevel) => {
-					this.countHeaders(headerLevel);
+					this.countHeaders(view, headerLevel);
 				},
 				parseInt(this.settings.defaultLevel)
 			).open();
@@ -54,7 +57,7 @@ export default class HeaderCounterPlugin extends Plugin {
 				new HeaderLevelModal(
 					this.app,
 					(headerLevel) => {
-						this.countHeaders(headerLevel);
+						this.countHeaders(view as MarkdownView, headerLevel);
 					},
 					parseInt(this.settings.defaultLevel)
 				).open();
@@ -70,7 +73,7 @@ export default class HeaderCounterPlugin extends Plugin {
 				if (checking) {
 					return !!view;
 				}
-				this.computeHeaderSummary();
+				this.computeHeaderSummary(view as MarkdownView);
 			},
 		});
 	}
@@ -91,11 +94,7 @@ export default class HeaderCounterPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async countHeaders(headerLevel: number) {
-		const view = this.app.workspace.getActiveViewOfType(
-			MarkdownView
-		) as MarkdownView;
-
+	async countHeaders(view: MarkdownView, headerLevel: number) {
 		const editor = view.editor;
 		const content = editor.getValue();
 
@@ -106,11 +105,7 @@ export default class HeaderCounterPlugin extends Plugin {
 		new Notice(`Number of level ${headerLevel} headers: ${count}`);
 	}
 
-	async computeHeaderSummary() {
-		const view = this.app.workspace.getActiveViewOfType(
-			MarkdownView
-		) as MarkdownView;
-
+	async computeHeaderSummary(view: MarkdownView) {
 		const editor = view.editor;
 		const content = editor.getValue();
 
@@ -199,15 +194,10 @@ class HeaderCounterSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		this.add_general_setting_header();
-		this.add_setting_header();
+		this.set_default_header();
 	}
 
-	add_general_setting_header(): void {
-		new Setting(this.containerEl).setName("Header counter").setHeading();
-	}
-
-	add_setting_header(): void {
+	set_default_header(): void {
 		const desc = document.createDocumentFragment();
 		desc.append("Set the default header level to count.");
 
